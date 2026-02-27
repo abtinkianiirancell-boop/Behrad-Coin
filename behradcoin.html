@@ -1,0 +1,1210 @@
+<!doctype html>
+<html lang="fa" dir="rtl" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>بهراد کوین</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Vazirmatn', sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; }
+    html, body { height: 100%; overflow: hidden; }
+    
+    .glass { background: rgba(255,255,255,0.1); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.2); }
+    .glass-dark { background: rgba(0,0,0,0.2); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); }
+    
+    .coin-container { perspective: 1000px; }
+    .coin { 
+      width: 180px; height: 180px; 
+      background: linear-gradient(145deg, #ffd700, #ffb700, #ffa500);
+      border-radius: 50%; 
+      box-shadow: 0 0 60px rgba(255,215,0,0.5), inset 0 -8px 20px rgba(0,0,0,0.3), inset 0 8px 20px rgba(255,255,255,0.4);
+      transition: transform 0.1s ease-out;
+      cursor: pointer;
+      position: relative;
+    }
+    .coin::before {
+      content: '₿'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      font-size: 80px; color: rgba(0,0,0,0.3); font-weight: 900;
+    }
+    .coin::after {
+      content: ''; position: absolute; top: 10px; left: 20%; width: 60%; height: 20px;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.6), transparent);
+      border-radius: 50%;
+    }
+    .coin:active { transform: scale(0.95) rotateX(10deg); }
+    .coin.tapped { animation: coinTap 0.15s ease-out; }
+    
+    @keyframes coinTap {
+      0% { transform: scale(1); }
+      50% { transform: scale(0.92) rotateX(15deg); }
+      100% { transform: scale(1); }
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    .floating { animation: float 3s ease-in-out infinite; }
+    
+    .tap-effect {
+      position: absolute; pointer-events: none;
+      font-size: 24px; font-weight: 700; color: #ffd700;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+      animation: tapFloat 0.8s ease-out forwards;
+    }
+    .tap-effect.critical { font-size: 32px; color: #ff4444; }
+    
+    @keyframes tapFloat {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-80px) scale(1.2); }
+    }
+    
+    .energy-bar { 
+      background: linear-gradient(90deg, #00d4ff, #0099ff);
+      transition: width 0.3s ease-out;
+      box-shadow: 0 0 15px rgba(0,212,255,0.5);
+    }
+    
+    .nav-item { transition: all 0.2s ease; }
+    .nav-item.active { background: rgba(255,215,0,0.3); color: #ffd700; }
+    .nav-item:not(.active):hover { background: rgba(255,255,255,0.1); }
+    
+    .page { display: none; opacity: 0; transition: opacity 0.3s ease; height: 100%; overflow-y: auto; }
+    .page.active { display: flex; flex-direction: column; opacity: 1; }
+    
+    .upgrade-card { transition: all 0.2s ease; }
+    .upgrade-card:hover { transform: translateY(-2px); }
+    .upgrade-card:active { transform: scale(0.98); }
+    
+    .achievement-card { transition: all 0.2s ease; }
+    .achievement-card.unlocked { background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,165,0,0.1)); border-color: rgba(255,215,0,0.5); }
+    
+    .bottom-sheet {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 100;
+      max-height: 85%;
+    }
+    .bottom-sheet.open { transform: translateY(0); }
+    .bottom-sheet-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+      z-index: 99;
+    }
+    .bottom-sheet-overlay.open { opacity: 1; pointer-events: auto; }
+    
+    .toggle-switch {
+      width: 50px; height: 26px; background: rgba(255,255,255,0.2);
+      border-radius: 13px; position: relative; cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .toggle-switch.active { background: #ffd700; }
+    .toggle-switch::after {
+      content: ''; position: absolute; top: 3px; left: 3px;
+      width: 20px; height: 20px; background: white;
+      border-radius: 50%; transition: transform 0.3s ease;
+    }
+    .toggle-switch.active::after { transform: translateX(24px); }
+    
+    .particle {
+      position: absolute; pointer-events: none;
+      width: 8px; height: 8px; background: #ffd700;
+      border-radius: 50%; animation: particleFly 0.6s ease-out forwards;
+    }
+    @keyframes particleFly {
+      0% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(0) translate(var(--tx), var(--ty)); }
+    }
+    
+    .pulse { animation: pulse 2s infinite; }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255,215,0,0.4); }
+      50% { box-shadow: 0 0 0 15px rgba(255,215,0,0); }
+    }
+    
+    .shimmer {
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      background-size: 200% 100%;
+      animation: shimmer 2s infinite;
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    .scroll-container { scrollbar-width: thin; scrollbar-color: rgba(255,215,0,0.5) transparent; }
+    .scroll-container::-webkit-scrollbar { width: 4px; }
+    .scroll-container::-webkit-scrollbar-track { background: transparent; }
+    .scroll-container::-webkit-scrollbar-thumb { background: rgba(255,215,0,0.5); border-radius: 2px; }
+
+    .theme-gold { --primary: #ffd700; --secondary: #ffb700; }
+    .theme-blue { --primary: #00d4ff; --secondary: #0099ff; }
+    .theme-purple { --primary: #a855f7; --secondary: #7c3aed; }
+    .theme-green { --primary: #22c55e; --secondary: #16a34a; }
+    .theme-pink { --primary: #ec4899; --secondary: #db2777; }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+ </head>
+ <body class="h-full theme-gold">
+  <div id="app" class="h-full flex flex-col bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+   <!-- Header -->
+   <header class="glass-dark px-4 py-3 flex items-center justify-between z-10">
+    <div class="flex items-center gap-3">
+     <div class="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-lg">
+      ₿
+     </div>
+     <div>
+      <h1 id="game-title" class="text-white font-bold text-lg">بهراد کوین</h1>
+      <div class="flex items-center gap-1 text-yellow-400 text-sm">
+       <span>🔥</span> <span id="streak-display">روز ۱</span>
+      </div>
+     </div>
+    </div>
+    <div class="glass rounded-full px-4 py-2 flex items-center gap-2">
+     <span class="text-yellow-400 text-xl">🪙</span> <span id="coin-display" class="text-white font-bold text-lg">۰</span>
+    </div>
+   </header><!-- Main Content -->
+   <main class="flex-1 overflow-hidden relative">
+    <!-- Home Page -->
+    <div id="page-home" class="page active items-center justify-center p-4">
+     <div class="text-center mb-6">
+      <p class="text-gray-300 text-sm mb-1">قدرت هر ضربه</p>
+      <p id="tap-power-display" class="text-yellow-400 font-bold text-2xl">+۱</p>
+     </div>
+     <div id="coin-area" class="coin-container relative mb-8">
+      <div id="main-coin" class="coin floating pulse"></div>
+     </div>
+     <div class="w-full max-w-xs">
+      <div class="flex justify-between text-sm text-gray-300 mb-2">
+       <span>انرژی</span> <span><span id="energy-current">۱۰۰۰</span> / <span id="energy-max">۱۰۰۰</span></span>
+      </div>
+      <div class="h-4 bg-gray-700 rounded-full overflow-hidden">
+       <div id="energy-bar" class="energy-bar h-full rounded-full" style="width: 100%"></div>
+      </div>
+      <p class="text-gray-400 text-xs mt-2 text-center"><span id="regen-rate">+۱</span> انرژی در ثانیه</p>
+     </div>
+    </div><!-- Upgrades Page -->
+    <div id="page-upgrades" class="page p-4 scroll-container">
+     <h2 class="text-white font-bold text-xl mb-4">🚀 ارتقاها</h2>
+     <div id="upgrades-list" class="space-y-3 pb-24"></div>
+    </div><!-- Achievements Page -->
+    <div id="page-achievements" class="page p-4 scroll-container">
+     <h2 class="text-white font-bold text-xl mb-2">🏆 دستاوردها</h2>
+     <p class="text-gray-400 text-sm mb-4"><span id="achievements-count">۰</span> از <span id="achievements-total">۲۰</span> دستاورد</p>
+     <div id="achievements-list" class="space-y-3 pb-24"></div>
+    </div><!-- Shop Page -->
+    <div id="page-shop" class="page p-4 scroll-container">
+     <h2 class="text-white font-bold text-xl mb-4">🛒 فروشگاه بوست</h2>
+     <div id="boosts-list" class="space-y-3 pb-24"></div>
+    </div><!-- Cosmetics Page -->
+    <div id="page-cosmetics" class="page p-4 scroll-container">
+     <h2 class="text-white font-bold text-xl mb-4">✨ آیتم‌های تزئینی</h2>
+     <p class="text-gray-400 text-sm mb-4">پروفایل خود را شخصی‌سازی کنید و با استایل منحصر‌به‌فردی بازی کنید!</p>
+     <div id="cosmetics-list" class="space-y-3 pb-24"></div>
+    </div><!-- Withdrawal Page -->
+    <div id="page-withdrawal" class="page p-4 scroll-container flex flex-col">
+     <h2 class="text-white font-bold text-xl mb-4">💳 برداشت سکه</h2>
+     <div class="glass rounded-2xl p-6 text-center flex-1 flex flex-col items-center justify-center">
+      <div class="text-5xl mb-4">
+       🎁
+      </div>
+      <p class="text-white text-lg font-bold mb-4 leading-relaxed">بهرادهای شما همزمان با ظهور امام زمان در صرافی‌های معتبر ایران و جهان لیست شده و آماده برداشت خواهند شد.</p>
+      <div class="glass rounded-xl p-4 w-full text-left my-4 border border-yellow-500/30">
+       <p class="text-yellow-400 text-sm mb-2">💰 موجودی شما:</p>
+       <p class="text-white font-bold text-3xl"><span id="withdrawal-coins">۰</span> بهراد</p>
+      </div>
+      <p class="text-gray-400 text-xs text-center">این قابلیت در نسخه اصلی و پس از راه‌اندازی صرافی‌های رسمی فعال خواهد شد.</p>
+     </div>
+    </div>
+   </main><!-- Navigation -->
+   <nav class="glass-dark border-t border-white/10">
+    <div class="flex items-center justify-around py-2">
+     <button class="nav-item active flex flex-col items-center p-2 rounded-xl text-white" data-page="home"> <span class="text-xl">🏠</span> <span class="text-xs mt-1">خانه</span> </button> <button class="nav-item flex flex-col items-center p-2 rounded-xl text-gray-400" data-page="upgrades"> <span class="text-xl">🚀</span> <span class="text-xs mt-1">ارتقا</span> </button> <button class="nav-item flex flex-col items-center p-2 rounded-xl text-gray-400" data-page="achievements"> <span class="text-xl">🏆</span> <span class="text-xs mt-1">دستاورد</span> </button> <button class="nav-item flex flex-col items-center p-2 rounded-xl text-gray-400" data-page="shop"> <span class="text-xl">🛒</span> <span class="text-xs mt-1">فروشگاه</span> </button> <button class="nav-item flex flex-col items-center p-2 rounded-xl text-gray-400" data-page="cosmetics"> <span class="text-xl">✨</span> <span class="text-xs mt-1">تزئینی</span> </button> <button class="nav-item flex flex-col items-center p-2 rounded-xl text-gray-400" data-page="withdrawal"> <span class="text-xl">💳</span> <span class="text-xs mt-1">برداشت</span> </button> <button id="settings-btn" class="nav-item flex flex-col items-center p-2 rounded-xl text-gray-400"> <span class="text-xl">⚙️</span> <span class="text-xs mt-1">تنظیمات</span> </button>
+    </div>
+   </nav><!-- Settings Bottom Sheet -->
+   <div id="settings-overlay" class="bottom-sheet-overlay"></div>
+   <div id="settings-sheet" class="bottom-sheet glass-dark rounded-t-3xl">
+    <div class="p-4">
+     <div class="w-12 h-1 bg-gray-500 rounded-full mx-auto mb-4"></div>
+     <h3 class="text-white font-bold text-lg mb-4 text-center">⚙️ تنظیمات</h3>
+     <div class="space-y-4 max-h-96 overflow-y-auto scroll-container pb-4">
+      <!-- Theme -->
+      <div class="glass rounded-xl p-4">
+       <p class="text-white font-medium mb-3">🎨 تم رنگی</p>
+       <div class="flex gap-2 flex-wrap">
+        <button class="theme-btn w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 ring-2 ring-white" data-theme="gold"></button> <button class="theme-btn w-10 h-10 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500" data-theme="blue"></button> <button class="theme-btn w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-violet-600" data-theme="purple"></button> <button class="theme-btn w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600" data-theme="green"></button> <button class="theme-btn w-10 h-10 rounded-full bg-gradient-to-br from-pink-400 to-pink-600" data-theme="pink"></button>
+       </div>
+      </div><!-- Sound -->
+      <div class="glass rounded-xl p-4 flex items-center justify-between">
+       <div class="flex items-center gap-3">
+        <span class="text-xl">🔊</span> <span class="text-white">صدای بازی</span>
+       </div>
+       <div id="sound-toggle" class="toggle-switch active"></div>
+      </div><!-- Vibration -->
+      <div class="glass rounded-xl p-4">
+       <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-3">
+         <span class="text-xl">📳</span> <span class="text-white">لرزش</span>
+        </div><span id="vibration-value" class="text-yellow-400 text-sm">متوسط</span>
+       </div><input id="vibration-slider" type="range" min="0" max="2" value="1" class="w-full accent-yellow-400">
+      </div><!-- Graphics Quality -->
+      <div class="glass rounded-xl p-4">
+       <p class="text-white font-medium mb-3">🖼️ کیفیت گرافیک</p>
+       <div class="flex gap-2">
+        <button class="quality-btn flex-1 py-2 rounded-lg glass text-gray-400 text-sm" data-quality="low">پایین</button> <button class="quality-btn flex-1 py-2 rounded-lg bg-yellow-500/30 text-yellow-400 text-sm" data-quality="medium">متوسط</button> <button class="quality-btn flex-1 py-2 rounded-lg glass text-gray-400 text-sm" data-quality="high">بالا</button>
+       </div>
+      </div><!-- Reduced Motion -->
+      <div class="glass rounded-xl p-4 flex items-center justify-between">
+       <div class="flex items-center gap-3">
+        <span class="text-xl">✨</span> <span class="text-white">کاهش انیمیشن</span>
+       </div>
+       <div id="motion-toggle" class="toggle-switch"></div>
+      </div><!-- Help --> <button id="help-btn" class="glass rounded-xl p-4 w-full flex items-center gap-3 text-right"> <span class="text-xl">❓</span> <span class="text-white">راهنمای بازی</span> </button> <!-- Reset --> <button id="reset-settings-btn" class="glass rounded-xl p-4 w-full flex items-center gap-3 text-right text-red-400"> <span class="text-xl">🔄</span> <span>بازنشانی تنظیمات</span> </button>
+     </div>
+    </div>
+   </div><!-- Help Modal -->
+   <div id="help-modal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
+    <div class="glass rounded-2xl p-6 m-4 max-w-sm max-h-96 overflow-y-auto scroll-container">
+     <h3 class="text-white font-bold text-lg mb-4 text-center">📖 راهنمای بازی</h3>
+     <div class="space-y-3 text-gray-300 text-sm">
+      <p>🪙 <strong class="text-white">ضربه بزن:</strong> روی سکه بزن تا سکه جمع کنی!</p>
+      <p>⚡ <strong class="text-white">انرژی:</strong> هر ضربه انرژی مصرف می‌کنه. صبر کن تا شارژ بشه.</p>
+      <p>🚀 <strong class="text-white">ارتقاها:</strong> با سکه‌هات قدرتت رو بیشتر کن.</p>
+      <p>🏆 <strong class="text-white">دستاوردها:</strong> ماموریت‌ها رو انجام بده و جایزه بگیر.</p>
+      <p>🔥 <strong class="text-white">ضربه کریتیکال:</strong> شانسی ۲ برابر سکه بگیر!</p>
+      <p>💤 <strong class="text-white">درآمد آفلاین:</strong> حتی وقتی نیستی هم سکه جمع کن.</p>
+     </div><button id="close-help" class="mt-4 w-full py-3 bg-yellow-500 text-black font-bold rounded-xl">متوجه شدم!</button>
+    </div>
+   </div><!-- Warning Toast -->
+   <div id="warning-toast" class="fixed top-20 left-4 right-4 glass-dark rounded-xl p-4 transform -translate-y-full opacity-0 transition-all duration-300 z-50">
+    <div class="flex items-center gap-3">
+     <span class="text-2xl">⚠️</span>
+     <p id="warning-text" class="text-white text-sm"></p>
+    </div>
+   </div>
+  </div>
+  <script>
+    // ========== Game Configuration ==========
+    const UPGRADES = [
+      { id: 'tap_power', name: 'قدرت ضربه', desc: 'هر ضربه سکه بیشتری بده', icon: '👊', basePrice: 100, priceMultiplier: 1.5, effect: 'tap_power', effectValue: 1 },
+      { id: 'max_energy', name: 'مخزن انرژی', desc: 'سقف انرژی رو افزایش بده', icon: '🔋', basePrice: 150, priceMultiplier: 1.6, effect: 'max_energy', effectValue: 100 },
+      { id: 'energy_regen', name: 'شارژ سریع', desc: 'انرژی سریع‌تر برگرده', icon: '⚡', basePrice: 200, priceMultiplier: 1.7, effect: 'energy_regen', effectValue: 0.5 },
+      { id: 'critical', name: 'شانس کریتیکال', desc: 'شانس ضربه ۲ برابر', icon: '🎯', basePrice: 500, priceMultiplier: 2, effect: 'critical_chance', effectValue: 2 },
+      { id: 'offline', name: 'درآمد آفلاین', desc: 'سکه جمع کن وقتی نیستی', icon: '💤', basePrice: 1000, priceMultiplier: 2.2, effect: 'offline_income', effectValue: 1 },
+      { id: 'tap_power_2', name: 'قدرت ضربه+', desc: 'افزایش قدرت ضربه', icon: '💪', basePrice: 2000, priceMultiplier: 1.8, effect: 'tap_power', effectValue: 3 },
+      { id: 'energy_cost', name: 'صرفه‌جویی', desc: 'کاهش مصرف انرژی', icon: '🌿', basePrice: 3000, priceMultiplier: 2, effect: 'energy_cost', effectValue: -0.1 },
+      { id: 'lucky', name: 'خوش‌شانسی', desc: 'شانس سکه بونوس', icon: '🍀', basePrice: 5000, priceMultiplier: 2.5, effect: 'lucky_bonus', effectValue: 5 },
+      { id: 'mega_tap', name: 'ضربه مگا', desc: 'قدرت ضربه فوق‌العاده', icon: '🔥', basePrice: 10000, priceMultiplier: 2, effect: 'tap_power', effectValue: 10 },
+      { id: 'infinite_energy', name: 'انرژی بی‌پایان', desc: 'سقف انرژی خیلی بیشتر', icon: '∞', basePrice: 25000, priceMultiplier: 2.5, effect: 'max_energy', effectValue: 500 }
+    ];
+
+    const ACHIEVEMENTS = [
+      { id: 'first_tap', name: 'اولین ضربه', desc: 'اولین ضربه‌ات رو بزن', condition: (s) => s.total_taps >= 1, reward: 10, icon: '👆' },
+      { id: 'tap_100', name: 'ضربه‌زن', desc: '۱۰۰ بار ضربه بزن', condition: (s) => s.total_taps >= 100, reward: 50, icon: '✊' },
+      { id: 'tap_1000', name: 'ضربه‌زن حرفه‌ای', desc: '۱٬۰۰۰ بار ضربه بزن', condition: (s) => s.total_taps >= 1000, reward: 200, icon: '💪' },
+      { id: 'tap_10000', name: 'استاد ضربه', desc: '۱۰٬۰۰۰ بار ضربه بزن', condition: (s) => s.total_taps >= 10000, reward: 1000, icon: '🥋' },
+      { id: 'tap_100000', name: 'افسانه ضربه', desc: '۱۰۰٬۰۰۰ بار ضربه بزن', condition: (s) => s.total_taps >= 100000, reward: 5000, icon: '👑' },
+      { id: 'coins_1000', name: 'پس‌انداز', desc: '۱٬۰۰۰ سکه جمع کن', condition: (s) => s.coins >= 1000, reward: 100, icon: '💰' },
+      { id: 'coins_10000', name: 'ثروتمند', desc: '۱۰٬۰۰۰ سکه جمع کن', condition: (s) => s.coins >= 10000, reward: 500, icon: '💎' },
+      { id: 'coins_100000', name: 'میلیونر', desc: '۱۰۰٬۰۰۰ سکه جمع کن', condition: (s) => s.coins >= 100000, reward: 2500, icon: '🏆' },
+      { id: 'coins_1000000', name: 'میلیاردر', desc: '۱٬۰۰۰٬۰۰۰ سکه جمع کن', condition: (s) => s.coins >= 1000000, reward: 10000, icon: '🌟' },
+      { id: 'upgrade_1', name: 'اولین ارتقا', desc: 'اولین ارتقا رو بخر', condition: (s) => countUpgrades(s) >= 1, reward: 50, icon: '🆙' },
+      { id: 'upgrade_5', name: 'ارتقاچی', desc: '۵ ارتقا بخر', condition: (s) => countUpgrades(s) >= 5, reward: 200, icon: '📈' },
+      { id: 'upgrade_10', name: 'ارتقا مستر', desc: '۱۰ ارتقا بخر', condition: (s) => countUpgrades(s) >= 10, reward: 500, icon: '🚀' },
+      { id: 'upgrade_25', name: 'ماشین ارتقا', desc: '۲۵ ارتقا بخر', condition: (s) => countUpgrades(s) >= 25, reward: 2000, icon: '⚙️' },
+      { id: 'streak_3', name: 'وفادار', desc: '۳ روز پشت سر هم بیا', condition: (s) => s.daily_streak >= 3, reward: 100, icon: '📅' },
+      { id: 'streak_7', name: 'هفته‌ای', desc: '۷ روز پشت سر هم بیا', condition: (s) => s.daily_streak >= 7, reward: 500, icon: '🔥' },
+      { id: 'streak_30', name: 'ماهانه', desc: '۳۰ روز پشت سر هم بیا', condition: (s) => s.daily_streak >= 30, reward: 5000, icon: '🏅' },
+      { id: 'play_1h', name: 'بازیکن', desc: '۱ ساعت بازی کن', condition: (s) => s.play_time >= 3600, reward: 100, icon: '⏱️' },
+      { id: 'play_5h', name: 'گیمر', desc: '۵ ساعت بازی کن', condition: (s) => s.play_time >= 18000, reward: 500, icon: '🎮' },
+      { id: 'critical_hit', name: 'شانس‌آورد', desc: 'یه ضربه کریتیکال بزن', condition: (s) => s.critical_hits >= 1, reward: 100, icon: '🎯' },
+      { id: 'power_10', name: 'قدرتمند', desc: 'قدرت ضربه رو به ۱۰ برسون', condition: (s) => s.tap_power >= 10, reward: 300, icon: '💥' }
+    ];
+
+    // ========== Cosmetics System ==========
+    const COSMETICS = [
+      { id: 'frame_gold', name: 'قاب طلایی', desc: 'قاب پروفایل طلایی لاکچری', icon: '🟨', price: 500, type: 'frame', rarity: 'common' },
+      { id: 'frame_diamond', name: 'قاب الماس', desc: 'قاب پروفایل نازک و شفاف', icon: '💎', price: 2000, type: 'frame', rarity: 'rare' },
+      { id: 'frame_neon', name: 'قاب نئون', desc: 'قاب پروفایل با افکت نئون', icon: '⚡', price: 3000, type: 'frame', rarity: 'epic' },
+      { id: 'effect_glow', name: 'افکت درخشان', desc: 'سکه‌ای درخشان و نورانی', icon: '✨', price: 1000, type: 'effect', rarity: 'common' },
+      { id: 'effect_fire', name: 'افکت آتش', desc: 'سکه‌ای با افکت شعله‌ور', icon: '🔥', price: 1500, type: 'effect', rarity: 'rare' },
+      { id: 'effect_ice', name: 'افکت یخ', desc: 'سکه‌ای با افکت یخ و برفی', icon: '❄️', price: 1500, type: 'effect', rarity: 'rare' },
+      { id: 'bg_space', name: 'پس‌زمینه فضا', desc: 'پس‌زمینه کهکشانی و فضایی', icon: '🌌', price: 2000, type: 'background', rarity: 'epic' },
+      { id: 'bg_ocean', name: 'پس‌زمینه اقیانوس', desc: 'پس‌زمینه آبی و آرام', icon: '🌊', price: 1500, type: 'background', rarity: 'rare' },
+      { id: 'badge_elite', name: 'نشان الیت', desc: 'نشان ویژه‌ی کاربران الیت', icon: '👑', price: 5000, type: 'badge', rarity: 'legendary' },
+      { id: 'badge_founder', name: 'نشان بنیان‌گذار', desc: 'نشان بنیان‌گذاران بازی', icon: '🌟', price: 10000, type: 'badge', rarity: 'legendary' },
+      { id: 'title_master', name: 'عنوان استاد', desc: 'عنوان "استاد ضربه‌زن"', icon: '🥋', price: 3000, type: 'title', rarity: 'epic' },
+      { id: 'title_rich', name: 'عنوان پول‌دار', desc: 'عنوان "کوین‌دار"', icon: '💰', price: 2000, type: 'title', rarity: 'epic' }
+    ];
+
+    const BOOSTS = [
+      { id: 'infinite_energy', name: 'انرژی نامحدود', desc: '۲ دقیقه انرژی بی‌پایان', price: 300, duration: 120, icon: '⚡', effect: 'infinite_energy' },
+      { id: 'auto_tap', name: 'ضربه خودکار', desc: '۱ دقیقه ضربه اتوماتیک', price: 400, duration: 60, icon: '🤖', effect: 'auto_tap' },
+      { id: 'lucky_boost', name: 'بوست شانس', desc: '۳ دقیقه شانس بیشتر', price: 250, duration: 180, icon: '🍀', effect: 'lucky_boost' }
+    ];
+
+    // ========== Game State ==========
+    let gameState = {
+      coins: 0,
+      total_taps: 0,
+      energy: 1000,
+      max_energy: 1000,
+      tap_power: 1,
+      energy_regen: 1,
+      energy_cost: 1,
+      critical_chance: 0,
+      critical_hits: 0,
+      lucky_bonus: 0,
+      offline_income: 0,
+      upgrades: {},
+      achievements: {},
+      daily_streak: 1,
+      last_login: new Date().toISOString(),
+      play_time: 0,
+      settings: {
+        theme: 'gold',
+        sound: true,
+        vibration: 1,
+        quality: 'medium',
+        reducedMotion: false
+      },
+      activeBoosts: {},
+      cosmetics: {},
+      equipped_cosmetics: {},
+      anti_cheat_score: 100,
+      tap_history: []
+    };
+
+    let dataRecord = null;
+    let isInitialized = false;
+    let playStartTime = Date.now();
+
+    // ========== Helper Functions ==========
+    const toPersianNum = (num) => {
+      const persianDigits = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+      return num.toString().replace(/\d/g, d => persianDigits[d]);
+    };
+
+    const formatNumber = (num) => {
+      if (num >= 1000000) return toPersianNum((num/1000000).toFixed(1)) + 'M';
+      if (num >= 1000) return toPersianNum((num/1000).toFixed(1)) + 'K';
+      return toPersianNum(Math.floor(num));
+    };
+
+    const countUpgrades = (state) => {
+      const ups = typeof state.upgrades === 'string' ? JSON.parse(state.upgrades || '{}') : state.upgrades;
+      return Object.values(ups).reduce((a, b) => a + b, 0);
+    };
+
+    const getUpgradePrice = (upgrade, level) => {
+      return Math.floor(upgrade.basePrice * Math.pow(upgrade.priceMultiplier, level));
+    };
+
+    // ========== Anti-Cheat System ==========
+    const antiCheat = {
+      lastTapTime: 0,
+      tapTimes: [],
+      maxTapsPerSecond: 15,
+      warningCount: 0,
+
+      recordTap() {
+        const now = Date.now();
+        this.tapTimes.push(now);
+        
+        // Keep only last 2 seconds of taps
+        this.tapTimes = this.tapTimes.filter(t => now - t < 2000);
+        
+        // Check tap rate
+        const tapsPerSecond = this.tapTimes.length / 2;
+        
+        if (tapsPerSecond > this.maxTapsPerSecond) {
+          this.warningCount++;
+          gameState.anti_cheat_score = Math.max(0, gameState.anti_cheat_score - 5);
+          
+          if (this.warningCount >= 3) {
+            showWarning('⚠️ سرعت ضربه غیرعادی تشخیص داده شد!');
+            return false;
+          }
+        }
+        
+        this.lastTapTime = now;
+        return true;
+      },
+
+      checkTimeManipulation() {
+        const serverTime = Date.now();
+        const lastLogin = new Date(gameState.last_login).getTime();
+        
+        if (serverTime < lastLogin - 60000) {
+          showWarning('⚠️ تغییر زمان دستگاه تشخیص داده شد!');
+          return false;
+        }
+        return true;
+      }
+    };
+
+    function showWarning(message) {
+      const toast = document.getElementById('warning-toast');
+      document.getElementById('warning-text').textContent = message;
+      toast.style.transform = 'translateY(0)';
+      toast.style.opacity = '1';
+      
+      setTimeout(() => {
+        toast.style.transform = 'translateY(-100%)';
+        toast.style.opacity = '0';
+      }, 3000);
+    }
+
+    // ========== Core Game Functions ==========
+    function tap(e) {
+      if (!antiCheat.recordTap()) return;
+      if (gameState.energy < gameState.energy_cost && !gameState.activeBoosts.infinite_energy) {
+        vibrate(50);
+        return;
+      }
+
+      // Consume energy
+      if (!gameState.activeBoosts.infinite_energy) {
+        gameState.energy = Math.max(0, gameState.energy - gameState.energy_cost);
+      }
+
+      // Calculate coins
+      let coinsEarned = gameState.tap_power;
+      let isCritical = false;
+
+      // Critical hit check
+      if (Math.random() * 100 < gameState.critical_chance) {
+        coinsEarned *= 2;
+        isCritical = true;
+        gameState.critical_hits = (gameState.critical_hits || 0) + 1;
+      }
+
+      // Lucky bonus check
+      if (Math.random() * 100 < gameState.lucky_bonus) {
+        coinsEarned += Math.floor(gameState.tap_power * 0.5);
+      }
+
+      // Double tap boost
+      if (gameState.activeBoosts.double_tap) {
+        coinsEarned *= 2;
+      }
+
+      gameState.coins += coinsEarned;
+      gameState.total_taps++;
+
+      // Effects
+      createTapEffect(e, coinsEarned, isCritical);
+      animateCoin();
+      vibrate(gameState.settings.vibration * 15);
+      
+      updateUI();
+      checkAchievements();
+      saveGame();
+    }
+
+    function createTapEffect(e, amount, isCritical) {
+      if (gameState.settings.reducedMotion) return;
+
+      const coinArea = document.getElementById('coin-area');
+      const rect = coinArea.getBoundingClientRect();
+      
+      const effect = document.createElement('div');
+      effect.className = 'tap-effect' + (isCritical ? ' critical' : '');
+      effect.textContent = '+' + toPersianNum(amount);
+      
+      const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+      const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+      
+      effect.style.left = x + 'px';
+      effect.style.top = y + 'px';
+      
+      coinArea.appendChild(effect);
+      
+      // Particles
+      if (gameState.settings.quality !== 'low') {
+        for (let i = 0; i < 5; i++) {
+          const particle = document.createElement('div');
+          particle.className = 'particle';
+          particle.style.left = x + 'px';
+          particle.style.top = y + 'px';
+          particle.style.setProperty('--tx', (Math.random() - 0.5) * 100 + 'px');
+          particle.style.setProperty('--ty', (Math.random() - 0.5) * 100 + 'px');
+          coinArea.appendChild(particle);
+          setTimeout(() => particle.remove(), 600);
+        }
+      }
+      
+      setTimeout(() => effect.remove(), 800);
+    }
+
+    function animateCoin() {
+      const coin = document.getElementById('main-coin');
+      coin.classList.add('tapped');
+      setTimeout(() => coin.classList.remove('tapped'), 150);
+    }
+
+    function vibrate(duration) {
+      if (gameState.settings.vibration > 0 && navigator.vibrate) {
+        navigator.vibrate(duration);
+      }
+    }
+
+    // ========== Energy Regeneration ==========
+    let lastRegenTime = Date.now();
+    
+    function regenerateEnergy() {
+      const now = Date.now();
+      const delta = (now - lastRegenTime) / 1000;
+      lastRegenTime = now;
+      
+      if (gameState.energy < gameState.max_energy) {
+        gameState.energy = Math.min(gameState.max_energy, gameState.energy + gameState.energy_regen * delta);
+        updateEnergyBar();
+      }
+    }
+
+    function updateEnergyBar() {
+      const percent = (gameState.energy / gameState.max_energy) * 100;
+      document.getElementById('energy-bar').style.width = percent + '%';
+      document.getElementById('energy-current').textContent = toPersianNum(Math.floor(gameState.energy));
+      document.getElementById('energy-max').textContent = toPersianNum(gameState.max_energy);
+    }
+
+    // ========== Boost System ==========
+    function activateBoost(boost) {
+      if (gameState.coins < boost.price) {
+        showWarning('سکه کافی نداری!');
+        return;
+      }
+      
+      gameState.coins -= boost.price;
+      gameState.activeBoosts[boost.effect] = Date.now() + (boost.duration * 1000);
+      
+      updateUI();
+      saveGame();
+      
+      // Auto-tap boost
+      if (boost.effect === 'auto_tap') {
+        startAutoTap();
+      }
+    }
+
+    function startAutoTap() {
+      const interval = setInterval(() => {
+        if (!gameState.activeBoosts.auto_tap || Date.now() > gameState.activeBoosts.auto_tap) {
+          clearInterval(interval);
+          delete gameState.activeBoosts.auto_tap;
+          return;
+        }
+        
+        const fakeEvent = { clientX: 100, clientY: 100 };
+        tap(fakeEvent);
+      }, 200);
+    }
+
+    function updateBoosts() {
+      const now = Date.now();
+      Object.keys(gameState.activeBoosts).forEach(key => {
+        if (now > gameState.activeBoosts[key]) {
+          delete gameState.activeBoosts[key];
+        }
+      });
+    }
+
+    // ========== Upgrade System ==========
+    function buyUpgrade(upgradeId) {
+      const upgrade = UPGRADES.find(u => u.id === upgradeId);
+      if (!upgrade) return;
+      
+      const level = gameState.upgrades[upgradeId] || 0;
+      const price = getUpgradePrice(upgrade, level);
+      
+      if (gameState.coins < price) {
+        showWarning('سکه کافی نداری!');
+        return;
+      }
+      
+      gameState.coins -= price;
+      gameState.upgrades[upgradeId] = level + 1;
+      
+      // Apply effect
+      switch (upgrade.effect) {
+        case 'tap_power':
+          gameState.tap_power += upgrade.effectValue;
+          break;
+        case 'max_energy':
+          gameState.max_energy += upgrade.effectValue;
+          gameState.energy = Math.min(gameState.energy + upgrade.effectValue, gameState.max_energy);
+          break;
+        case 'energy_regen':
+          gameState.energy_regen += upgrade.effectValue;
+          break;
+        case 'critical_chance':
+          gameState.critical_chance += upgrade.effectValue;
+          break;
+        case 'offline_income':
+          gameState.offline_income += upgrade.effectValue;
+          break;
+        case 'energy_cost':
+          gameState.energy_cost = Math.max(0.5, gameState.energy_cost + upgrade.effectValue);
+          break;
+        case 'lucky_bonus':
+          gameState.lucky_bonus += upgrade.effectValue;
+          break;
+      }
+      
+      updateUI();
+      renderUpgrades();
+      checkAchievements();
+      saveGame();
+    }
+
+    // ========== Achievement System ==========
+    function checkAchievements() {
+      let newAchievements = false;
+      
+      ACHIEVEMENTS.forEach(ach => {
+        if (!gameState.achievements[ach.id] && ach.condition(gameState)) {
+          gameState.achievements[ach.id] = true;
+          gameState.coins += ach.reward;
+          newAchievements = true;
+          showWarning(`🏆 دستاورد جدید: ${ach.name}!`);
+        }
+      });
+      
+      if (newAchievements) {
+        renderAchievements();
+        saveGame();
+      }
+    }
+
+    // ========== UI Updates ==========
+    function updateUI() {
+      document.getElementById('coin-display').textContent = formatNumber(gameState.coins);
+      document.getElementById('tap-power-display').textContent = '+' + toPersianNum(gameState.tap_power);
+      document.getElementById('streak-display').textContent = 'روز ' + toPersianNum(gameState.daily_streak);
+      document.getElementById('regen-rate').textContent = '+' + toPersianNum(gameState.energy_regen.toFixed(1));
+      updateEnergyBar();
+    }
+
+    function renderUpgrades() {
+      const container = document.getElementById('upgrades-list');
+      container.innerHTML = '';
+      
+      UPGRADES.forEach(upgrade => {
+        const level = gameState.upgrades[upgrade.id] || 0;
+        const price = getUpgradePrice(upgrade, level);
+        const canAfford = gameState.coins >= price;
+        
+        const card = document.createElement('div');
+        card.className = `upgrade-card glass rounded-xl p-4 ${canAfford ? 'cursor-pointer' : 'opacity-60'}`;
+        card.innerHTML = `
+          <div class="flex items-center gap-4">
+            <div class="text-3xl">${upgrade.icon}</div>
+            <div class="flex-1">
+              <div class="flex items-center gap-2">
+                <h3 class="text-white font-bold">${upgrade.name}</h3>
+                <span class="text-yellow-400 text-sm">Lv.${toPersianNum(level)}</span>
+              </div>
+              <p class="text-gray-400 text-sm">${upgrade.desc}</p>
+            </div>
+            <div class="text-left">
+              <div class="flex items-center gap-1 text-yellow-400">
+                <span>🪙</span>
+                <span class="font-bold">${formatNumber(price)}</span>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        if (canAfford) {
+          card.onclick = () => buyUpgrade(upgrade.id);
+        }
+        
+        container.appendChild(card);
+      });
+    }
+
+    function renderAchievements() {
+      const container = document.getElementById('achievements-list');
+      container.innerHTML = '';
+      
+      let unlockedCount = 0;
+      
+      ACHIEVEMENTS.forEach(ach => {
+        const unlocked = gameState.achievements[ach.id];
+        if (unlocked) unlockedCount++;
+        
+        const card = document.createElement('div');
+        card.className = `achievement-card glass rounded-xl p-4 border ${unlocked ? 'unlocked border-yellow-500/50' : 'border-transparent opacity-70'}`;
+        card.innerHTML = `
+          <div class="flex items-center gap-4">
+            <div class="text-3xl ${unlocked ? '' : 'grayscale'}">${ach.icon}</div>
+            <div class="flex-1">
+              <h3 class="text-white font-bold">${ach.name}</h3>
+              <p class="text-gray-400 text-sm">${ach.desc}</p>
+            </div>
+            <div class="text-left">
+              <div class="flex items-center gap-1 ${unlocked ? 'text-green-400' : 'text-yellow-400'}">
+                <span>${unlocked ? '✅' : '🪙'}</span>
+                <span class="font-bold text-sm">${unlocked ? 'انجام شد' : '+' + formatNumber(ach.reward)}</span>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        container.appendChild(card);
+      });
+      
+      document.getElementById('achievements-count').textContent = toPersianNum(unlockedCount);
+      document.getElementById('achievements-total').textContent = toPersianNum(ACHIEVEMENTS.length);
+    }
+
+    function renderBoosts() {
+      const container = document.getElementById('boosts-list');
+      container.innerHTML = '';
+      
+      BOOSTS.forEach(boost => {
+        const active = gameState.activeBoosts[boost.effect];
+        const canAfford = gameState.coins >= boost.price;
+        
+        const card = document.createElement('div');
+        card.className = `upgrade-card glass rounded-xl p-4 ${active ? 'border border-green-500' : canAfford ? 'cursor-pointer' : 'opacity-60'}`;
+        card.innerHTML = `
+          <div class="flex items-center gap-4">
+            <div class="text-3xl">${boost.icon}</div>
+            <div class="flex-1">
+              <h3 class="text-white font-bold">${boost.name}</h3>
+              <p class="text-gray-400 text-sm">${boost.desc}</p>
+            </div>
+            <div class="text-left">
+              ${active ? 
+                `<span class="text-green-400 text-sm font-bold">فعال</span>` :
+                `<div class="flex items-center gap-1 text-yellow-400">
+                  <span>🪙</span>
+                  <span class="font-bold">${formatNumber(boost.price)}</span>
+                </div>`
+              }
+            </div>
+          </div>
+        `;
+        
+        if (!active && canAfford) {
+          card.onclick = () => activateBoost(boost);
+        }
+        
+        container.appendChild(card);
+      });
+    }
+
+    function renderLeaderboard() {
+      const container = document.getElementById('leaderboard-list');
+      
+      // Simulated leaderboard data
+      const leaderboard = [
+        { name: 'شما', coins: gameState.coins, isUser: true },
+        { name: 'علی', coins: Math.floor(Math.random() * 1000000) },
+        { name: 'مریم', coins: Math.floor(Math.random() * 800000) },
+        { name: 'محمد', coins: Math.floor(Math.random() * 600000) },
+        { name: 'فاطمه', coins: Math.floor(Math.random() * 400000) },
+        { name: 'حسین', coins: Math.floor(Math.random() * 200000) },
+        { name: 'زهرا', coins: Math.floor(Math.random() * 100000) },
+        { name: 'رضا', coins: Math.floor(Math.random() * 50000) }
+      ].sort((a, b) => b.coins - a.coins);
+      
+      container.innerHTML = leaderboard.map((player, i) => `
+        <div class="glass rounded-xl p-3 flex items-center gap-3 ${player.isUser ? 'border border-yellow-500' : ''}">
+          <div class="w-8 h-8 rounded-full ${i === 0 ? 'bg-yellow-500' : i === 1 ? 'bg-gray-400' : i === 2 ? 'bg-orange-600' : 'bg-gray-600'} flex items-center justify-center font-bold text-white">
+            ${toPersianNum(i + 1)}
+          </div>
+          <div class="flex-1">
+            <span class="text-white font-medium">${player.name}</span>
+          </div>
+          <div class="flex items-center gap-1 text-yellow-400">
+            <span>🪙</span>
+            <span class="font-bold">${formatNumber(player.coins)}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderCosmetics() {
+      const container = document.getElementById('cosmetics-list');
+      container.innerHTML = '';
+      
+      const cosmeticsByType = {};
+      COSMETICS.forEach(item => {
+        if (!cosmeticsByType[item.type]) {
+          cosmeticsByType[item.type] = [];
+        }
+        cosmeticsByType[item.type].push(item);
+      });
+      
+      const typeNames = {
+        frame: '🖼️ قاب‌ها',
+        effect: '✨ افکت‌ها',
+        background: '🌅 پس‌زمینه‌ها',
+        badge: '🏅 نشان‌ها',
+        title: '📝 عناوین'
+      };
+      
+      Object.keys(cosmeticsByType).forEach(type => {
+        const section = document.createElement('div');
+        section.className = 'mb-6';
+        
+        const titleElem = document.createElement('h3');
+        titleElem.className = 'text-white font-bold text-lg mb-3';
+        titleElem.textContent = typeNames[type];
+        section.appendChild(titleElem);
+        
+        cosmeticsByType[type].forEach(item => {
+          const owned = gameState.cosmetics[item.id];
+          const equipped = gameState.equipped_cosmetics[item.type];
+          const isEquipped = equipped === item.id;
+          const canAfford = gameState.coins >= item.price;
+          
+          const card = document.createElement('div');
+          card.className = `cosmetic-card glass rounded-xl p-4 transition-all ${isEquipped ? 'border-2 border-green-400' : ''} ${owned && !isEquipped ? 'cursor-pointer' : owned || canAfford ? 'cursor-pointer' : 'opacity-60'}`;
+          
+          const rarityColors = {
+            common: 'text-gray-400',
+            rare: 'text-blue-400',
+            epic: 'text-purple-400',
+            legendary: 'text-yellow-400'
+          };
+          
+          const rarityLabels = {
+            common: 'عام',
+            rare: 'نادر',
+            epic: 'حماسی',
+            legendary: 'افسانه‌ای'
+          };
+          
+          card.innerHTML = `
+            <div class="flex items-center gap-4">
+              <div class="text-4xl">${item.icon}</div>
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <h3 class="text-white font-bold">${item.name}</h3>
+                  <span class="${rarityColors[item.rarity]} text-xs">${rarityLabels[item.rarity]}</span>
+                </div>
+                <p class="text-gray-400 text-sm">${item.desc}</p>
+              </div>
+              <div class="text-left">
+                ${isEquipped ? 
+                  `<span class="text-green-400 text-sm font-bold">✓ مجهز</span>` :
+                  owned ?
+                    `<button class="px-3 py-1 bg-green-500/30 text-green-400 rounded text-sm font-medium">انتخاب</button>` :
+                    `<div class="flex items-center gap-1 ${canAfford ? 'text-yellow-400' : 'text-gray-500'} text-sm">
+                      <span>🪙</span>
+                      <span class="font-bold">${formatNumber(item.price)}</span>
+                    </div>`
+                }
+              </div>
+            </div>
+          `;
+          
+          if (owned && !isEquipped) {
+            card.addEventListener('click', () => {
+              gameState.equipped_cosmetics[item.type] = item.id;
+              renderCosmetics();
+              saveGame();
+            });
+          } else if (!owned && canAfford) {
+            card.addEventListener('click', () => {
+              gameState.coins -= item.price;
+              gameState.cosmetics[item.id] = true;
+              gameState.equipped_cosmetics[item.type] = item.id;
+              renderCosmetics();
+              updateUI();
+              saveGame();
+              showWarning(`✨ ${item.name} را خریدی!`);
+            });
+          }
+          
+          section.appendChild(card);
+        });
+        
+        container.appendChild(section);
+      });
+    }
+
+    // ========== Navigation ==========
+    function switchPage(pageId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-item[data-page]').forEach(n => {
+        n.classList.remove('active');
+        n.classList.add('text-gray-400');
+        n.classList.remove('text-white');
+      });
+      
+      const page = document.getElementById('page-' + pageId);
+      const nav = document.querySelector(`.nav-item[data-page="${pageId}"]`);
+      
+      if (page) page.classList.add('active');
+      if (nav) {
+        nav.classList.add('active');
+        nav.classList.remove('text-gray-400');
+        nav.classList.add('text-white');
+      }
+      
+      // Render page-specific content
+      if (pageId === 'upgrades') renderUpgrades();
+      if (pageId === 'achievements') renderAchievements();
+      if (pageId === 'shop') renderBoosts();
+      if (pageId === 'cosmetics') renderCosmetics();
+      if (pageId === 'withdrawal') {
+        document.getElementById('withdrawal-coins').textContent = formatNumber(gameState.coins);
+      }
+    }
+
+    // ========== Settings ==========
+    function openSettings() {
+      document.getElementById('settings-overlay').classList.add('open');
+      document.getElementById('settings-sheet').classList.add('open');
+    }
+
+    function closeSettings() {
+      document.getElementById('settings-overlay').classList.remove('open');
+      document.getElementById('settings-sheet').classList.remove('open');
+    }
+
+    function applyTheme(theme) {
+      document.body.className = document.body.className.replace(/theme-\w+/, '');
+      document.body.classList.add('theme-' + theme);
+      gameState.settings.theme = theme;
+      
+      document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.classList.toggle('ring-2', btn.dataset.theme === theme);
+        btn.classList.toggle('ring-white', btn.dataset.theme === theme);
+      });
+      
+      saveGame();
+    }
+
+    function updateVibrationLabel() {
+      const labels = ['خاموش', 'متوسط', 'قوی'];
+      document.getElementById('vibration-value').textContent = labels[gameState.settings.vibration];
+    }
+
+    // ========== Data Persistence ==========
+    async function saveGame() {
+      if (!isInitialized) return;
+      
+      gameState.play_time += Math.floor((Date.now() - playStartTime) / 1000);
+      playStartTime = Date.now();
+      
+      const data = {
+        user_id: 'user_1',
+        coins: gameState.coins,
+        total_taps: gameState.total_taps,
+        energy: gameState.energy,
+        max_energy: gameState.max_energy,
+        tap_power: gameState.tap_power,
+        energy_regen: gameState.energy_regen,
+        critical_chance: gameState.critical_chance,
+        offline_income: gameState.offline_income,
+        upgrades: JSON.stringify(gameState.upgrades),
+        achievements: JSON.stringify(gameState.achievements),
+        daily_streak: gameState.daily_streak,
+        last_login: new Date().toISOString(),
+        play_time: gameState.play_time,
+        settings: JSON.stringify(gameState.settings),
+        anti_cheat_score: gameState.anti_cheat_score,
+        last_tap_time: new Date().toISOString(),
+        tap_history: JSON.stringify(antiCheat.tapTimes.slice(-10))
+      };
+      
+      if (dataRecord) {
+        await window.dataSdk.update({ ...dataRecord, ...data });
+      } else {
+        await window.dataSdk.create(data);
+      }
+    }
+
+    function loadGame(data) {
+      if (!data) return;
+      
+      gameState.coins = data.coins || 0;
+      gameState.total_taps = data.total_taps || 0;
+      gameState.energy = data.energy || 1000;
+      gameState.max_energy = data.max_energy || 1000;
+      gameState.tap_power = data.tap_power || 1;
+      gameState.energy_regen = data.energy_regen || 1;
+      gameState.critical_chance = data.critical_chance || 0;
+      gameState.offline_income = data.offline_income || 0;
+      gameState.upgrades = JSON.parse(data.upgrades || '{}');
+      gameState.achievements = JSON.parse(data.achievements || '{}');
+      gameState.cosmetics = JSON.parse(data.cosmetics || '{}');
+      gameState.equipped_cosmetics = JSON.parse(data.equipped_cosmetics || '{}');
+      gameState.daily_streak = data.daily_streak || 1;
+      gameState.play_time = data.play_time || 0;
+      gameState.anti_cheat_score = data.anti_cheat_score || 100;
+      
+      if (data.settings) {
+        gameState.settings = { ...gameState.settings, ...JSON.parse(data.settings) };
+      }
+      
+      // Check daily streak
+      const lastLogin = new Date(data.last_login);
+      const today = new Date();
+      const diffDays = Math.floor((today - lastLogin) / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 1) {
+        gameState.daily_streak++;
+      } else if (diffDays > 1) {
+        gameState.daily_streak = 1;
+      }
+      
+      // Calculate offline income
+      if (gameState.offline_income > 0 && diffDays > 0) {
+        const offlineEarnings = Math.min(gameState.offline_income * diffDays * 60, 10000);
+        if (offlineEarnings > 0) {
+          gameState.coins += offlineEarnings;
+          showWarning(`💤 درآمد آفلاین: +${formatNumber(offlineEarnings)} سکه`);
+        }
+      }
+      
+      // Apply settings
+      applyTheme(gameState.settings.theme);
+      document.getElementById('sound-toggle').classList.toggle('active', gameState.settings.sound);
+      document.getElementById('vibration-slider').value = gameState.settings.vibration;
+      document.getElementById('motion-toggle').classList.toggle('active', gameState.settings.reducedMotion);
+      updateVibrationLabel();
+      
+      updateUI();
+    }
+
+    // ========== Initialization ==========
+    async function init() {
+      // Initialize Data SDK
+      if (window.dataSdk) {
+        const result = await window.dataSdk.init({
+          onDataChanged(data) {
+            if (data.length > 0) {
+              dataRecord = data[0];
+              loadGame(dataRecord);
+            }
+            isInitialized = true;
+          }
+        });
+      } else {
+        isInitialized = true;
+      }
+      
+      // Initialize Element SDK
+      if (window.elementSdk) {
+        window.elementSdk.init({
+          defaultConfig: { game_title: 'مهیار کوین ۲' },
+          onConfigChange: async (config) => {
+            document.getElementById('game-title').textContent = config.game_title || 'مهیار کوین ۲';
+          },
+          mapToCapabilities: (config) => ({
+            recolorables: [],
+            borderables: [],
+            fontEditable: undefined,
+            fontSizeable: undefined
+          }),
+          mapToEditPanelValues: (config) => new Map([
+            ['game_title', config.game_title || 'مهیار کوین ۲']
+          ])
+        });
+      }
+      
+      // Setup coin tap
+      const coin = document.getElementById('main-coin');
+      coin.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        tap(e);
+      }, { passive: false });
+      coin.addEventListener('mousedown', tap);
+      
+      // Setup navigation
+      document.querySelectorAll('.nav-item[data-page]').forEach(btn => {
+        btn.addEventListener('click', () => switchPage(btn.dataset.page));
+      });
+      
+      // Setup settings
+      document.getElementById('settings-btn').addEventListener('click', openSettings);
+      document.getElementById('settings-overlay').addEventListener('click', closeSettings);
+      
+      document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
+      });
+      
+      document.getElementById('sound-toggle').addEventListener('click', function() {
+        this.classList.toggle('active');
+        gameState.settings.sound = this.classList.contains('active');
+        saveGame();
+      });
+      
+      document.getElementById('vibration-slider').addEventListener('input', function() {
+        gameState.settings.vibration = parseInt(this.value);
+        updateVibrationLabel();
+        vibrate(30);
+        saveGame();
+      });
+      
+      document.querySelectorAll('.quality-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.quality-btn').forEach(b => {
+            b.classList.remove('bg-yellow-500/30', 'text-yellow-400');
+            b.classList.add('glass', 'text-gray-400');
+          });
+          this.classList.remove('glass', 'text-gray-400');
+          this.classList.add('bg-yellow-500/30', 'text-yellow-400');
+          gameState.settings.quality = this.dataset.quality;
+          saveGame();
+        });
+      });
+      
+      document.getElementById('motion-toggle').addEventListener('click', function() {
+        this.classList.toggle('active');
+        gameState.settings.reducedMotion = this.classList.contains('active');
+        saveGame();
+      });
+      
+      document.getElementById('help-btn').addEventListener('click', () => {
+        document.getElementById('help-modal').classList.remove('hidden');
+      });
+      
+      document.getElementById('close-help').addEventListener('click', () => {
+        document.getElementById('help-modal').classList.add('hidden');
+      });
+      
+      document.getElementById('reset-settings-btn').addEventListener('click', () => {
+        gameState.settings = { theme: 'gold', sound: true, vibration: 1, quality: 'medium', reducedMotion: false };
+        applyTheme('gold');
+        document.getElementById('sound-toggle').classList.add('active');
+        document.getElementById('vibration-slider').value = 1;
+        document.getElementById('motion-toggle').classList.remove('active');
+        updateVibrationLabel();
+        saveGame();
+        showWarning('✅ تنظیمات بازنشانی شد');
+      });
+      
+      // Game loop
+      setInterval(() => {
+        regenerateEnergy();
+        updateBoosts();
+        antiCheat.checkTimeManipulation();
+      }, 100);
+      
+      // Auto-save
+      setInterval(saveGame, 30000);
+      
+      // Initial render
+      renderUpgrades();
+      renderAchievements();
+      renderBoosts();
+      updateUI();
+    }
+
+    init();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9d49ba52544c97d2',t:'MTc3MjIxNjc1OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
